@@ -8,7 +8,8 @@ extract_mplus_tables <- function(file_path) {
     "STANDARDIZED MODEL RESULTS",
     "STDYX Standardization",
     "R-SQUARE",
-    "CONFIDENCE INTERVALS OF MODEL RESULTS"
+    "CONFIDENCE INTERVALS OF MODEL RESULTS",
+    "New/Additional Parameters"
   )
   
   # Initialize results list
@@ -27,6 +28,8 @@ extract_mplus_tables <- function(file_path) {
         header_pattern <- "^\\s*Lower .5%\\s+Lower 2.5%\\s+Lower 5%\\s+Estimate\\s+Upper 5%\\s+Upper 2.5%\\s+Upper .5%"
       } else if(section == "R-SQUARE") {
         header_pattern <- "^\\s*Observed\\s+Two-Tailed"
+      } else if(section == "New/Additional Parameters") {
+        header_pattern <- "^\\s*Estimate\\s+S\\.E\\.\\s+Est\\./S\\.E\\.\\s+P-Value"
       } else {
         next
       }
