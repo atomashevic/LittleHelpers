@@ -184,28 +184,49 @@ format_mplus_table <- function(table, title = NULL) {
 
 # Extract indirect effects from Mplus output
 extract_indirect_effects <- function(tables) {
-  # Get unstandardized estimate
+  # Find the New/Additional Parameters sections
   unst <- tables[["MODEL RESULTS"]]
-  ind_unst <- unst[unst$Parameter == "IND", ]
+  if(!is.null(unst)) {
+    # Look for section header row
+    new_params_idx <- which(unst$Parameter == "New/Additional Parameters")
+    if(length(new_params_idx) > 0) {
+      # Get IND row that follows the header
+      ind_unst <- unst[new_params_idx + 1, ]
+    }
+  }
   
-  # Get standardized estimate
+  # Get standardized estimate from STDYX section
   std <- tables[["STDYX Standardization"]]
-  ind_std <- std[std$Parameter == "IND", ]
+  if(!is.null(std)) {
+    new_params_idx <- which(std$Parameter == "New/Additional Parameters")
+    if(length(new_params_idx) > 0) {
+      ind_std <- std[new_params_idx + 1, ]
+    }
+  }
   
   # Get confidence intervals
   ci <- tables[["CONFIDENCE INTERVALS OF MODEL RESULTS"]]
-  ind_ci <- ci[ci$Parameter == "IND", ]
+  if(!is.null(ci)) {
+    new_params_idx <- which(ci$Parameter == "New/Additional Parameters")
+    if(length(new_params_idx) > 0) {
+      ind_ci <- ci[new_params_idx + 1, ]
+    }
+  }
   
-  # Create summary table
-  data.frame(
-    Effect = "Indirect Effect",
-    Estimate = ind_unst$Estimate,
-    SE = ind_unst$SE,
-    `Std.Estimate` = ind_std$Estimate,
-    `Std.SE` = ind_std$SE,
-    `CI.lower` = ind_ci$Lower_5,
-    `CI.upper` = ind_ci$Upper_5
-  )
+  # Create summary table if we found the values
+  if(exists("ind_unst") && exists("ind_std") && exists("ind_ci")) {
+    data.frame(
+      Effect = "Indirect Effect",
+      Estimate = ind_unst$Estimate,
+      SE = ind_unst$SE,
+      `Std.Estimate` = ind_std$Estimate,
+      `Std.SE` = ind_std$SE,
+      `CI.lower` = ind_ci$Lower_5,
+      `CI.upper` = ind_ci$Upper_5
+    )
+  } else {
+    NULL
+  }
 }
 
 # Helper function to write tables to Word
