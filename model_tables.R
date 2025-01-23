@@ -205,37 +205,20 @@ format_mplus_table <- function(table, title = NULL) {
 
 # Extract indirect effects from Mplus output
 extract_indirect_effects <- function(tables) {
-  # Find the New/Additional Parameters sections
+  # Get unstandardized estimate from MODEL RESULTS
   unst <- tables[["MODEL RESULTS"]]
-  if(!is.null(unst)) {
-    # Look for section header row
-    new_params_idx <- which(unst$Parameter == "New/Additional Parameters")
-    if(length(new_params_idx) > 0) {
-      # Get IND row that follows the header
-      ind_unst <- unst[new_params_idx + 1, ]
-    }
-  }
+  ind_unst <- unst[grep("^\\s*IND\\s+", unst$Parameter), ]
   
-  # Get standardized estimate from STDYX section
+  # Get standardized estimate from STDYX Standardization
   std <- tables[["STDYX Standardization"]]
-  if(!is.null(std)) {
-    new_params_idx <- which(std$Parameter == "New/Additional Parameters")
-    if(length(new_params_idx) > 0) {
-      ind_std <- std[new_params_idx + 1, ]
-    }
-  }
+  ind_std <- std[grep("^\\s*IND\\s+", std$Parameter), ]
   
   # Get confidence intervals
   ci <- tables[["CONFIDENCE INTERVALS OF MODEL RESULTS"]]
-  if(!is.null(ci)) {
-    new_params_idx <- which(ci$Parameter == "New/Additional Parameters")
-    if(length(new_params_idx) > 0) {
-      ind_ci <- ci[new_params_idx + 1, ]
-    }
-  }
+  ind_ci <- ci[grep("^\\s*IND\\s+", ci$Parameter), ]
   
   # Create summary table if we found the values
-  if(exists("ind_unst") && exists("ind_std") && exists("ind_ci")) {
+  if(nrow(ind_unst) > 0 && nrow(ind_std) > 0 && nrow(ind_ci) > 0) {
     data.frame(
       Effect = "Indirect Effect",
       Estimate = ind_unst$Estimate,
