@@ -182,6 +182,32 @@ format_mplus_table <- function(table, title = NULL) {
   return(formatted_table)
 }
 
+# Extract indirect effects from Mplus output
+extract_indirect_effects <- function(tables) {
+  # Get unstandardized estimate
+  unst <- tables[["MODEL RESULTS"]]
+  ind_unst <- unst[unst$Parameter == "IND", ]
+  
+  # Get standardized estimate
+  std <- tables[["STDYX Standardization"]]
+  ind_std <- std[std$Parameter == "IND", ]
+  
+  # Get confidence intervals
+  ci <- tables[["CONFIDENCE INTERVALS OF MODEL RESULTS"]]
+  ind_ci <- ci[ci$Parameter == "IND", ]
+  
+  # Create summary table
+  data.frame(
+    Effect = "Indirect Effect",
+    Estimate = ind_unst$Estimate,
+    SE = ind_unst$SE,
+    `Std.Estimate` = ind_std$Estimate,
+    `Std.SE` = ind_std$SE,
+    `CI.lower` = ind_ci$Lower_5,
+    `CI.upper` = ind_ci$Upper_5
+  )
+}
+
 # Helper function to write tables to Word
 write_mplus_tables_to_docx <- function(tables, output_file) {
   if(!requireNamespace("officer", quietly = TRUE)) {
@@ -212,6 +238,34 @@ write_mplus_tables_to_docx <- function(tables, output_file) {
     
     # Set header style
     ft <- flextable::bold(ft, bold = TRUE, part = "header")
+    
+    # Auto-adjust column widths
+    ft <- flextable::autofit(ft)
+    
+    # Add to document
+    doc <- flextable::body_add_flextable(doc, ft)
+    
+    # Add space after table
+    doc <- officer::body_add_par(doc, "")
+  }
+  
+  # Add indirect effects table if present
+  ind_effects <- extract_indirect_effects(tables)
+  if(!is.null(ind_effects) && nrow(ind_effects) > 0) {
+    # Add title
+    doc <- officer::body_add_par(doc, "Indirect Effects", style = "heading 2")
+    
+    # Convert to flextable
+    ft <- flextable::flextable(ind_effects)
+    
+    # Set header style
+    ft <- flextable::bold(ft, bold = TRUE, part = "header")
+    
+    # Format numbers
+    ft <- flextable::colformat_double(ft, 
+                                    j = c("Estimate", "SE", "Std.Estimate", 
+                                         "Std.SE", "CI.lower", "CI.upper"),
+                                    digits = 3)
     
     # Auto-adjust column widths
     ft <- flextable::autofit(ft)
