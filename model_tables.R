@@ -129,6 +129,24 @@ extract_mplus_tables <- function(file_path) {
           
           if(!is.null(results)) tables[[section]] <- results
         }
+      } else if(section == "New/Additional Parameters") {
+        # Find where the actual parameters start
+        param_start <- which(grepl("^\\s*IND\\s+", table_lines))
+        if(length(param_start) > 0) {
+          param_lines <- table_lines[param_start]
+          
+          results <- tryCatch({
+            data.frame(
+              Parameter = "IND",
+              Estimate = as.numeric(gsub(".*?\\s+([-0-9\\.]+)\\s+.*", "\\1", param_lines)),
+              SE = as.numeric(gsub(".*?\\s+[-0-9\\.]+\\s+([-0-9\\.]+)\\s+.*", "\\1", param_lines)),
+              `Est./S.E.` = as.numeric(gsub(".*?\\s+[-0-9\\.]+\\s+[-0-9\\.]+\\s+([-0-9\\.]+)\\s+.*", "\\1", param_lines)),
+              P = as.numeric(gsub(".*?\\s+[-0-9\\.]+\\s+[-0-9\\.]+\\s+[-0-9\\.]+\\s+([-0-9\\.]+).*", "\\1", param_lines))
+            )
+          }, error = function(e) NULL)
+          
+          if(!is.null(results)) tables[[section]] <- results
+        }
       }
     }
   }
